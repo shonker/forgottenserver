@@ -16,6 +16,7 @@
 
 class DepotChest;
 class House;
+struct Mount;
 class NetworkMessage;
 class Npc;
 class Party;
@@ -164,8 +165,8 @@ public:
 	uint64_t getBankBalance() const { return bankBalance; }
 	void setBankBalance(uint64_t balance) { bankBalance = balance; }
 
-	Guild* getGuild() const { return guild; }
-	void setGuild(Guild* guild);
+	Guild_ptr getGuild() const { return guild; }
+	void setGuild(Guild_ptr guild);
 
 	GuildRank_ptr getGuildRank() const { return guildRank; }
 	void setGuildRank(GuildRank_ptr newGuildRank) { guildRank = newGuildRank; }
@@ -575,6 +576,12 @@ public:
 			client->sendUpdateTile(tile, pos);
 		}
 	}
+	void sendUpdateCreatureIcons(const Creature* creature)
+	{
+		if (client) {
+			client->sendUpdateCreatureIcons(creature);
+		}
+	}
 
 	void sendChannelMessage(const std::string& author, const std::string& text, SpeakClasses type, uint16_t channel)
 	{
@@ -769,6 +776,9 @@ public:
 	void onRemoveCreature(Creature* creature, bool isLogout) override;
 	void onCreatureMove(Creature* creature, const Tile* newTile, const Position& newPos, const Tile* oldTile,
 	                    const Position& oldPos, bool teleport) override;
+
+	void onEquipInventory();
+	void onDeEquipInventory();
 
 	void onAttackedCreatureDisappear(bool isLogout) override;
 	void onFollowCreatureDisappear(bool isLogout) override;
@@ -1057,6 +1067,12 @@ public:
 			client->sendCombatAnalyzer(type, amount, impactType, target);
 		}
 	}
+	void sendResourceBalance(const ResourceTypes_t resourceType, uint64_t amount)
+	{
+		if (client) {
+			client->sendResourceBalance(resourceType, amount);
+		}
+	}
 
 	void receivePing() { lastPong = OTSYS_TIME(); }
 
@@ -1139,7 +1155,7 @@ private:
 	int32_t getThingIndex(const Thing* thing) const override;
 	size_t getFirstIndex() const override;
 	size_t getLastIndex() const override;
-	uint32_t getItemTypeCount(uint16_t itemId, int32_t subType = -1) const override;
+	uint32_t getItemTypeCount(uint16_t itemId, int32_t subType = -1, bool ignoreEquipped = false) const override;
 	std::map<uint32_t, uint32_t>& getAllItemTypeCount(std::map<uint32_t, uint32_t>& countMap) const override;
 	Thing* getThing(size_t index) const override;
 
@@ -1191,7 +1207,7 @@ private:
 	ProtocolGame_ptr client;
 	Connection::Address lastIP = {};
 	BedItem* bedItem = nullptr;
-	Guild* guild = nullptr;
+	Guild_ptr guild = nullptr;
 	GuildRank_ptr guildRank = nullptr;
 	Group* group = nullptr;
 	Inbox* inbox;
@@ -1217,6 +1233,7 @@ private:
 	uint32_t magLevel = 0;
 	uint32_t actionTaskEvent = 0;
 	uint32_t walkTaskEvent = 0;
+	uint32_t classicAttackEvent = 0;
 	uint32_t MessageBufferTicks = 0;
 	uint32_t accountNumber = 0;
 	uint32_t guid = 0;
